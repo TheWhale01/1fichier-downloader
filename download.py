@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
 import os
+import sys
 
 def get_links(filename: str()) -> list(str()):
 	links = []
@@ -32,7 +33,7 @@ def init(download_dir: str()) -> webdriver.firefox.webdriver.WebDriver:
 
 def main():
 	if (not os.path.isdir('./downloads/')):
-		os.makedir('./downloads/')
+		os.mkdir('./downloads/')
 	download_dir = os.path.abspath('./downloads/')
 	browser = init(download_dir)
 	links = get_links('links.txt')
@@ -40,6 +41,10 @@ def main():
 		print('Link accessed.')
 		browser.get(link)
 		sleep(5)
+		try:
+			browser.find_element(By.CLASS_NAME, 'cookie_box_close').click()
+		except:
+			pass
 		browser.find_element(By.XPATH, '/html/body/div[5]/div[1]/button').click()
 		sleep(1)
 		access_button = browser.find_element(By.ID, 'dlb')
@@ -48,9 +53,12 @@ def main():
 			try:
 				access_button.click()
 				break
-			except:
+			except Exception as e:
+				print(e, file=sys.stderr)
 				sleep(60)
+				access_button = browser.find_element(By.ID, 'dlb')
 		browser.find_element(By.XPATH, '/html/body/div[4]/div[2]/a').click()
+		sleep(5)
 		print('download started.')
 		while (is_part_file(download_dir)):
 			sleep(60)
