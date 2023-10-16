@@ -31,8 +31,11 @@ class Downloader:
 		self.__browser.close()
 
 	def __check_part_file(self):
-		os.chdir(self.__download_dir)
-		return (not len(glob.glob('*.part')))
+		files = os.listdir(self.__download_dir)
+		for file in files:
+			if file.endswith('.part'):
+				return (file)
+		return ('')
 
 	def __check_waiting_time(self):
 		try:
@@ -56,18 +59,22 @@ class Downloader:
 	def __get_file_info(self):
 		filename = self.__browser.find_element(By.XPATH, '/html/body/form/table/tbody/tr[1]/td[3]')
 		filename = filename.get_attribute('innerText')
-		size = self.__browser.find_element(By.XPATH, '/html/body/form/table/tbody/tr[3]/td[2]')
-		size = size.get_attribute('innerText')
-		return (filename, size)
+		size_info = self.__browser.find_element(By.XPATH, '/html/body/form/table/tbody/tr[3]/td[2]')
+		size_info = size_info.get_attribute('innerText')
+		size_info = size_info.split(' ')
+		size_info[0] = float(size_info[0])
+		return (filename, size_info)
 	
 	def __show_progress_bar(self, size):
-		os.chdir(self.__download_dir)
-		part_file = glob.glob(('*.part'))
+		part_file = self.__check_part_file()
 		with tqdm(total=size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
 			while True:
-				current_size = os.path.getsize(os.path.join(self.__download_dir, part_file))
+				try:
+					current_size = os.path.getsize(os.path.join(self.__download_dir, part_file))
+				except:
+					break
 				pbar.update(current_size - pbar.n)
-				if (current_size == size):
+				if (current_size >= size):
 					break
 				sleep(1)
 
@@ -80,9 +87,12 @@ class Downloader:
 		# Close premium box
 		self.__browser.find_element(By.XPATH, '/html/body/div[5]/div[1]/button').click()
 
-		filename, size = self.__get_file_info()
-		print(filename, size)
-		print(f"file: {filename}\nsize: {size}")
+		filename, size_info = self.__get_file_info()
+		print(f"file: {filename}\nsize: {size_info[0]} {size_info[1]}")
+		if (size_info[1] == 'Go'):
+			size_info[0] *= 1073741824
+		elif (size_info[1] == 'Mo'):
+			size_info[0] *= 1048576
 		time = self.__check_waiting_time()
 		if (time):
 			current_time = datetime.datetime.now()
@@ -98,7 +108,7 @@ class Downloader:
 		sleep(2)
 		print("Starting download")
 		self.__browser.find_element(By.XPATH, '/html/body/div[4]/div[2]/a').click()
-		self.__show_progress_bar(size)
+		self.__show_progress_bar(size_info[0])
 
 	def download_files(self):
 		with open(self.__filename, 'r') as file:
