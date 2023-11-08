@@ -2,8 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
 import os
-import sys
 import datetime
+import requests
 from tqdm import tqdm
 
 class Downloader:
@@ -27,15 +27,14 @@ class Downloader:
 		self.__browser.install_addon(extension_path)
 		sleep(5)
 
-#	def __del__(self):
-#		self.__browser.close()
+	class __File:
+		def __init__(self, filename, size, unit='Go'):
+			self.filename = filename
+			self.size = size
+			self.unit = unit
 
-	def __check_part_file(self):
-		files = os.listdir(self.__download_dir)
-		for file in files:
-			if file.endswith('.part'):
-				return (file)
-		return ('')
+	def __del__(self):
+		self.__browser.close()
 
 	def __check_waiting_time(self):
 		try:
@@ -63,20 +62,17 @@ class Downloader:
 		size_info = size_info.get_attribute('innerText')
 		size_info = size_info.split(' ')
 		size_info[0] = float(size_info[0])
-		return (filename, size_info)
+		return (self.__File(filename, size_info[0], size_info[1]))
 	
-	def __show_progress_bar(self, size):
-		part_file = self.__check_part_file()
-		with tqdm(total=size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
-			while True:
-				try:
-					current_size = os.path.getsize(os.path.join(self.__download_dir, part_file))
-				except:
-					break
-				pbar.update(current_size - pbar.n)
-				if (current_size >= size):
-					break
-				sleep(1)
+	def __show_progress_bar(self, file, link):
+		response = requests.get(link, stream=True)
+		with tqdm(total=file.size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+			with open(os.path.join(self.__download_dir, file.filename), 'wb') as file:
+				for chunk in response.iter_content(1024):
+					if (not chunk):
+						break
+					file.write(chunk)
+					pbar.update(len(chunk))
 
 	def __download_link(self, link: str()):
 		self.__browser.get(link)
@@ -87,12 +83,12 @@ class Downloader:
 		# Close premium box
 		self.__browser.find_element(By.XPATH, '/html/body/div[5]/div[1]/button').click()
 
-		filename, size_info = self.__get_file_info()
-		print(f"file: {filename}\nsize: {size_info[0]} {size_info[1]}")
-		if (size_info[1] == 'Go'):
-			size_info[0] *= 1073741824
-		elif (size_info[1] == 'Mo'):
-			size_info[0] *= 1048576
+		file = self.__get_file_info()
+		print(f"file: {file.filename}\nsize: {file.size} {file.unit}")
+		if (file.unit == 'Go'):
+			file.size *= 1073741824
+		elif (file.unit == 'Mo'):
+			file.size *= 1048576
 		time = self.__check_waiting_time()
 		if (time):
 			current_time = datetime.datetime.now()
@@ -107,8 +103,8 @@ class Downloader:
 		access_button.click()
 		sleep(2)
 		print("Starting download")
-		self.__browser.find_element(By.XPATH, '/html/body/div[4]/div[2]/a').click()
-		self.__show_progress_bar(size_info[0])
+		link = self.__browser.find_element(By.CSS_SELECTOR, '.ok').get_attribute('href')
+		self.__show_progress_bar(file, link)
 
 	def download_files(self):
 		with open(self.__filename, 'r') as file:
