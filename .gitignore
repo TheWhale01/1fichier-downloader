@@ -3,3 +3,4 @@ downloads/
 links.txt
 geckodriver.log
 .vscode/
+.env

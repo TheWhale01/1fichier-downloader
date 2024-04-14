@@ -5,12 +5,20 @@ import os
 import datetime
 import requests
 from tqdm import tqdm
+import argparse
+from movie_renamer import MovieRenamer
+from series_renamer import SeriesRenamer
 
 class Downloader:
-	def __init__(self, filename: str()):
+	def __init__(self, filename: str, mode: str = ''):
 		self.__filename = filename
-		self.__chunk_size = 1024
+		self.__mode = mode
 		self.__download_dir = os.path.abspath('./downloads')
+		self.lib_dir: dict = {
+			'movies': '/data/Movies',
+			'tvshows': '/data/Series',
+			'animes': '/data/Animes',
+		}
 		if (not os.path.isdir(self.__download_dir)):
 			os.mkdir(self.__download_dir)
 		options = webdriver.FirefoxOptions()
@@ -47,7 +55,6 @@ class Downloader:
 			return (time * 60)
 		except:
 			return (0)
-		return (0)
 
 	def __close_cookie_box(self):
 		try:
@@ -74,15 +81,12 @@ class Downloader:
 					file.write(chunk)
 					pbar.update(len(chunk))
 
-	def __download_link(self, link: str()):
+	def __download_link(self, link: str):
 		self.__browser.get(link)
 		print(f'Got link: {link}')
 		sleep(2)
 		self.__close_cookie_box()
-
-		# Close premium box
 		self.__browser.find_element(By.XPATH, '/html/body/div[5]/div[1]/button').click()
-
 		file = self.__get_file_info()
 		print(f"file: {file.filename}\nsize: {file.size} {file.unit}")
 		if (file.unit == 'Go'):
@@ -105,6 +109,13 @@ class Downloader:
 		print("Starting download")
 		link = self.__browser.find_element(By.CSS_SELECTOR, '.ok').get_attribute('href')
 		self.__show_progress_bar(file, link)
+		renamer = None
+		if self.__mode == 'movies':
+			renamer = MovieRenamer()
+		else:
+			renamer = SeriesRenamer()
+		if renamer:
+			renamer.rename(file.filename)
 
 	def download_files(self):
 		with open(self.__filename, 'r') as file:
@@ -114,7 +125,17 @@ class Downloader:
 					self.__download_link(line)
 
 def main():
-	downloader = Downloader('./links.txt')
+	parser = argparse.ArgumentParser(description='Program that downloads a list of links')
+	parser.add_argument('-m', '--movies', action='store_true', help='set renamer to movie mode')
+	parser.add_argument('-s', '--tvshows', action='store_true', help='set renamer to tvshow mode')
+	parser.add_argument('-a', '--animes', action='store_true', help='set renamer to animes mode')
+	args = parser.parse_args()
+	modes = vars(args)
+	mode: str = ''
+	for k, v in modes.items():
+		if v:
+			mode = k
+	downloader = Downloader('./links.txt', mode=mode)
 	downloader.download_files()
 
 if (__name__ == '__main__'):
