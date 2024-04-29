@@ -48,7 +48,7 @@ class MovieRenamer:
         response_json['results'][0]['release_date'] = int(response_json['results'][0]['release_date'].split('-')[0])
         return response_json
 
-    def rename(self, filename: str, ):
+    def rename(self, filename: str):
         self.get_tokens(filename)
         response = self.search(self.movie_name, self.movie_year)
         new_name: str = ''

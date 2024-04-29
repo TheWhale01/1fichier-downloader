@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
 import os
+import shutil
 import datetime
 import requests
 from tqdm import tqdm
@@ -112,7 +113,7 @@ class Downloader:
 		renamer = None
 		if self.__mode == 'movies':
 			renamer = MovieRenamer()
-		else:
+		elif self.__mode == 'series':
 			renamer = SeriesRenamer()
 		if renamer:
 			renamer.rename(file.filename)

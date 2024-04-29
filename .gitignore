@@ -4,3 +4,4 @@ links.txt
 geckodriver.log
 .vscode/
 .env
+__pycache__/
