@@ -81,7 +81,6 @@ class Downloader:
 						break
 					file.write(chunk)
 					pbar.update(len(chunk))
-
 	def __download_link(self, link: str):
 		self.__browser.get(link)
 		print(f'Got link: {link}')
@@ -114,7 +113,7 @@ class Downloader:
 		if self.__mode == 'movies':
 			renamer = MovieRenamer()
 		elif self.__mode == 'series':
-			renamer = SeriesRenamer()
+			renamer = SeriesRenamer(self.lib_dir[self.__mode])
 		if renamer:
 			renamer.rename(file.filename)
 

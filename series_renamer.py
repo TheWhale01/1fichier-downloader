@@ -31,7 +31,7 @@ class SeriesRenamer:
 	def check_year(self) -> int:
 		i: int = 0
 		while i < len(self.tokens):
-			if self.tokens[i].isdigit():
+			if self.tokens[i].isdigit() and int(self.tokens[i]) >= 1939:
 				return i
 			i += 1
 		return -1	
@@ -69,19 +69,20 @@ class SeriesRenamer:
 			self.episode_nb = 0
 
 	def get_tokens(self, filename: str):
-			separators: str = '._-[]{}\'"|'
-			for separator in separators:
-				filename = filename.replace(separator, ' ')
-			self.tokens = filename.split(' ')
-			i: int = 0
-			while self.tokens[i].isalpha():
-				self.serie_name += (self.tokens[i] + ' ')
-				i += 1
-			season_episode_index: int = self.check_season_episode()
-			self.get_season_episode(self.tokens[season_episode_index])
+		separators: str = '._-[]{}\'"|'
+		for separator in separators:
+			filename = filename.replace(separator, ' ')
+		self.tokens = filename.split(' ')
+		i: int = 0
+		while self.tokens[i].isalpha():
+			self.serie_name += (self.tokens[i] + ' ')
 			i += 1
-			if self.tokens[i].isdigit() and int(self.tokens[i]) >= 1930:
-				self.serie_year = int(self.tokens[i])
+		season_episode_index: int = self.check_season_episode()
+		serie_year_index: int = self.check_year()
+		if season_episode_index > 0:
+			self.get_season_episode(self.tokens[season_episode_index])
+		if serie_year_index > 0:
+			self.serie_year = int(self.tokens[serie_year_index])
 
 	def search(self, serie_name: str, year: int = 0, page: int = 1, include_adult: bool = True) -> dict:
 		url: str = f'https://api.themoviedb.org/3/search/tv?query={serie_name}&include_adult={include_adult}&language={self.env["lang"]}&page={page}'
@@ -95,7 +96,6 @@ class SeriesRenamer:
 			
 	def rename(self, filename: str):
 		self.get_tokens(filename)
-		print(self.tokens)
 		self.search(self.serie_name, self.serie_year)
 		filepath: str = os.path.join(self.dl_dir, filename)
 		serie_dir: str = f'{self.serie_name} ({self.serie_year})'
@@ -111,6 +111,7 @@ class SeriesRenamer:
 			print('The following file will have to be renamed:')
 		new_name = os.path.join(serie_dir, new_name)
 		print(f'{filepath} -> {new_name}')
+		shutil.move(filepath, new_name)
 
 def main():
 		renamer = SeriesRenamer('./')
