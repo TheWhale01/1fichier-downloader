@@ -27,11 +27,11 @@ class Downloader:
 		options.set_preference('browser.download.manager.showWhenStarting', False)
 		options.set_preference('browser.download.dir', self.__download_dir)
 		options.set_preference('browser.helperApps.neverAsk.saveToDisk', 'application/octet-stream')
-		options.add_argument('--headless')
+		# options.add_argument('--headless')
 		extension_path = os.path.abspath('./ublock_origin-1.52.2.xpi')
 		self.__browser = webdriver.Firefox(options=options)
 		self.__browser.set_window_position(0, 0)
-		self.__browser.set_window_size(1260, 720)
+		self.__browser.maximize_window()
 		self.__browser.install_addon(extension_path)
 		sleep(5)
 
@@ -46,7 +46,7 @@ class Downloader:
 
 	def __check_waiting_time(self):
 		try:
-			time_element = self.__browser.find_element(By.CLASS_NAME, 'ct_warn')
+			time_element = self.__browser.find_element(By.CSS_SELECTOR, 'div.ct_warn:nth-child(3)')
 			time = time_element.get_attribute('innerText')
 			time = time.split('\n')[2]
 			time = time.replace('Vous devez attendre encore ', '')
@@ -86,7 +86,6 @@ class Downloader:
 		print(f'Got link: {link}')
 		sleep(2)
 		self.__close_cookie_box()
-		self.__browser.find_element(By.XPATH, '/html/body/div[5]/div[1]/button').click()
 		file = self.__get_file_info()
 		print(f"file: {file.filename}\nsize: {file.size} {file.unit}")
 		if (file.unit == 'Go'):
