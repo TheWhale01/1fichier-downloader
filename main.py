@@ -2,7 +2,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
 import os
-import shutil
 import datetime
 import requests
 from tqdm import tqdm
@@ -81,6 +80,7 @@ class Downloader:
 						break
 					file.write(chunk)
 					pbar.update(len(chunk))
+
 	def __download_link(self, link: str):
 		self.__browser.get(link)
 		print(f'Got link: {link}')
