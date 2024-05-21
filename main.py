@@ -19,9 +19,11 @@ class Downloader:
 			'tvshows': '/data/Series',
 			'animes': '/data/Animes',
 		}
+		self.__init_browser()
+
+	def __init_browser(self):
 		if (not os.path.isdir(self.__download_dir)):
 			os.mkdir(self.__download_dir)
-		options = webdriver.FirefoxOptions()
 		options = webdriver.FirefoxOptions()
 		options.set_preference('browser.download.folderList', 2)
 		options.set_preference('browser.download.manager.showWhenStarting', False)
@@ -73,6 +75,7 @@ class Downloader:
 	
 	def __show_progress_bar(self, file, link):
 		response = requests.get(link, stream=True)
+		self.__browser.close()
 		with tqdm(total=file.size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
 			with open(os.path.join(self.__download_dir, file.filename), 'wb') as file:
 				for chunk in response.iter_content(1024):
@@ -80,6 +83,7 @@ class Downloader:
 						break
 					file.write(chunk)
 					pbar.update(len(chunk))
+		self.__init_browser()
 
 	def __download_link(self, link: str):
 		self.__browser.get(link)
@@ -94,13 +98,15 @@ class Downloader:
 			file.size *= 1048576
 		time = self.__check_waiting_time()
 		if (time):
+			self.__browser.close()
 			current_time = datetime.datetime.now()
 			time_duration = datetime.timedelta(minutes=time / 60)
 			finish_time = current_time + time_duration
 			print(f'waiting for {time / 60} minutes. Download will start at {finish_time}')
-			wait_btn = self.__browser.find_element(By.ID, 'dlw')
-			self.__browser.execute_script('arguments[0].scrollIntoView();', wait_btn)
 			sleep(time)
+			self.__init_browser()
+			self.__browser.get(link)
+			sleep(2)
 		access_button = self.__browser.find_element(By.ID, 'dlb')
 		self.__browser.execute_script('arguments[0].scrollIntoView();', access_button)
 		access_button.click()
