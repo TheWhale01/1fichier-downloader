@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	body {
+		@apply flex flex-col justify-evenly items-center h-lvh size-full;
+	}
+	h1 {
+		@apply text-3xl font-semibold;
+	}
+	textarea {
+		@apply bg-gray-200 shadow-sm border-2 rounded-md p-4;
+	}
+	button {
+		@apply text-white bg-gradient-to-r from-indigo-500 via-sky-500
+			to-emerald-500 p-4 rounded-md shadow-md font-semibold active:shadow-none;
+	}
+	input {
+		@apply bg-gray-200 p-4 rounded;
+	}
+}
+
+@layer utilities {
+	.error_input {
+		@apply bg-red-500 placeholder-white;
+	}
+}
