@@ -1,18 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
 import uvicorn
 import os
-from database import crud, models, schemas
-from database.db import SessionLocal, engine
+from database import models
+from database.db import engine
 from fastapi.middleware.cors import CORSMiddleware
+from routers import user
 
 models.Base.metadata.create_all(bind=engine)
-def get_db():
-	db = SessionLocal()
-	try:
-		yield db
-	finally:
-		db.close()
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware,
@@ -22,18 +16,7 @@ app.add_middleware(CORSMiddleware,
 	allow_headers=['*']
 )
 
-@app.get('/user')
-def get_user(db: Session = Depends(get_db)):
-	return {"user": crud.user_exists(db)}
-
-@app.post('/user')
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-	return {"user": crud.create_user(db, user)}
-
-@app.delete('/user')
-def delete_user(db: Session = Depends(get_db)):
-	crud.delete_user(db)
-	return {"user": None}
+app.include_router(user.router)
 
 if __name__ == '__main__':
 	uvicorn.run("main:app", host=os.getenv("HOST"), port=int(os.getenv("PORT")), reload=True)

@@ -8,5 +8,5 @@ export async function load({ params }): Promise<void> {
 	if (!response_json['user'])
 		throw redirect(302, '/setup');
 	else
-		throw redirect(302, '/login');
+		throw redirect(302, '/login')
 }

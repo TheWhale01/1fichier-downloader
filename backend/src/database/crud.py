@@ -16,3 +16,7 @@ def delete_user(db: Session):
 	db_user = db.query(models.User).first()
 	db.delete(db_user)
 	db.commit()
+
+def get_user_by_username(username: str, db: Session):
+	db_user = db.query(models.User).filter(models.User.username == username).filter()
+	return db_user
