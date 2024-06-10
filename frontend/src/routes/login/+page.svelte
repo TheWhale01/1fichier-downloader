@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
+	import { access_token } from '$lib/stores';
+	import { goto } from '$app/navigation';
 
 	let username: string = "";
 	let password: string = "";
 	
 	async function login(): Promise<void> {
-		const response = await fetch(`http://localhost:3000/login`, {
+		const response = await fetch(`http://localhost:3000/token`, {
 			method: "POST",
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': 'application/x-www-form-urlencoded'
 			},
-			body: JSON.stringify({
+			body: new URLSearchParams({
 				'username': username,
 				'password': password
 			})
 		});
+		if (response.status != 200)
+			return ;
 		const response_json = await response.json();
-
-		if (response_json['isLoggedIn']) {
-			// store token in localStorage
-			goto('/');
-		}
+		access_token.set(response_json);
+		goto('/');
 	}
 </script>
 
