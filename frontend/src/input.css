@@ -7,7 +7,7 @@
 		@apply flex flex-col justify-evenly items-center h-lvh size-full;
 	}
 	h1 {
-		@apply text-3xl font-semibold;
+		@apply text-3xl font-semibold pt-7;
 	}
 	textarea {
 		@apply bg-gray-200 shadow-sm border-2 rounded-md p-4;
@@ -18,6 +18,9 @@
 	}
 	input {
 		@apply bg-gray-200 p-4 rounded;
+	}
+	form {
+		@apply flex flex-col justify-evenly items-center h-lvh;
 	}
 }
 

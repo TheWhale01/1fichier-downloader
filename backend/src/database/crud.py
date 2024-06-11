@@ -1,9 +1,13 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
 from auth import get_password_hash
+from fastapi import HTTPException, status
 
 def user_exists(db: Session):
-	return not(not(db.query(models.User).first()))
+	db_user = db.query(models.User).first()
+	if not db_user:
+		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such user")
+	return db_user
 
 def create_user(db: Session, user: schemas.UserCreate):
 	hashed_password: str = get_password_hash(user.password)
