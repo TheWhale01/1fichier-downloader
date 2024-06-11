@@ -4,7 +4,7 @@ import os
 from database import models
 from database.db import engine
 from fastapi.middleware.cors import CORSMiddleware
-from routers import user
+from routers import user, download
 import auth
 
 models.Base.metadata.create_all(bind=engine)
@@ -19,6 +19,7 @@ app.add_middleware(CORSMiddleware,
 
 app.include_router(user.router)
 app.include_router(auth.router)
+app.include_router(download.router)
 
 if __name__ == '__main__':
 	uvicorn.run("main:app", host=os.getenv("HOST"), port=int(os.getenv("PORT")), reload=True)

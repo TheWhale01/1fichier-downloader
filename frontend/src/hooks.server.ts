@@ -9,10 +9,7 @@ export const handle = async ({ event, resolve }) => {
 		headers: {'Authorization': `${type} ${token}`}
 	})).status === 200;
 	
-	console.log(user);
-	console.log(valid_token);
-	if ((!user && !valid_token && !event.route.id?.startsWith('/setup'))
-		|| (!user && valid_token && !event.route.id?.startsWith('/setup')))
+	if (!user && !event.route.id?.startsWith('/setup'))
 		throw redirect(302, '/setup');
 	else if (user && !valid_token && !event.route.id?.startsWith('/login'))
 		throw redirect(302, '/login');
