@@ -1,7 +1,5 @@
-from sqlalchemy.orm import Session
-from . import models, schemas
+from include import *
 from auth import get_password_hash
-from fastapi import HTTPException, status
 
 def user_exists(db: Session):
 	db_user = db.query(models.User).first()

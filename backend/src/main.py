@@ -1,11 +1,6 @@
-from fastapi import FastAPI
-import uvicorn
-import os
-from database import models
-from database.db import engine
-from fastapi.middleware.cors import CORSMiddleware
-from routers import user, download
+from include import *
 import auth
+from routers import user, download
 
 models.Base.metadata.create_all(bind=engine)
 

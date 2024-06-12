@@ -1,12 +1,6 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from database import crud, schemas
-from database.db import get_db
-from typing import Annotated
-from auth import oauth2_scheme
-from database.schemas import User
-from database import crud
+from include import *
 from auth import get_current_user
+from crud import user as user_service
 
 router = APIRouter(
 	prefix='/user'
@@ -14,7 +8,7 @@ router = APIRouter(
 
 @router.get('')
 def get_user(db: Session = Depends(get_db)):
-	return {"user": crud.user_exists(db)}
+	return {"user": user_service.user_exists(db)}
 
 @router.get('/me')
 def get_me(current_user: Annotated[User, Depends(get_current_user)]):
@@ -22,10 +16,10 @@ def get_me(current_user: Annotated[User, Depends(get_current_user)]):
 
 @router.post('')
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-	return {"user": crud.create_user(db, user)}
+	return {"user": user_service.create_user(db, user)}
 
 @router.delete('')
 def delete_user(db: Session = Depends(get_db)):
-	crud.delete_user(db)
+	user_service.delete_user(db)
 	return {"user": None}
 

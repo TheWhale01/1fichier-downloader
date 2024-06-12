@@ -1,16 +1,5 @@
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi import APIRouter, Depends, HTTPException, status
-from typing import Annotated
-from database import crud
-from database.db import get_db
-from database.schemas import Token, TokenData
-from database.models import User
-from passlib.context import CryptContext
-from sqlalchemy.orm import Session
-# from jwt.exceptions import InvalidTokenError
-from datetime import timedelta, datetime
-import jwt
-import os
+from include import *
+import crud
 
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')    
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
@@ -23,7 +12,7 @@ def get_password_hash(password: str) -> str:
      return pwd_context.hash(password)
 
 def auth_user(db: Session, username: str, password: str) -> User:
-    user: User = crud.get_user_by_username(username, db)
+    user: User = crud.user.get_user_by_username(username, db)
     if not user:
         return
     if not verify_password(password, user.hashed_password):
@@ -54,7 +43,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session 
         token_data = TokenData(username=username)
     except:
         raise creds_exception
-    user = crud.get_user_by_username(username=token_data.username, db=db)
+    user = crud.user.get_user_by_username(username=token_data.username, db=db)
     if user is None:
         raise creds_exception
     return user

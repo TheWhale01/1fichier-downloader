@@ -18,6 +18,7 @@ services:
     env_file: ./.env/backend.env
     volumes:
       - ./backend:/workspace
+      - ./backend/download:/downlaods # where files are downloaded
     working_dir: /workspace
     command: sh /workspace/script.sh
     restart: unless-stopped

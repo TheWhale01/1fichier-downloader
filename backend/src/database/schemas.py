@@ -18,3 +18,17 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
 	username: str | None = None
+
+class DownloadBase(BaseModel):
+	link: str
+
+class DownloadCreate(DownloadBase):
+	pass
+
+class Download(DownloadCreate):
+	id: int
+	filename: str
+	state: int
+
+	class Config:
+		from_attributes = True
