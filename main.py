@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
 import os
+import sys
 import datetime
 import requests
 from tqdm import tqdm
@@ -14,6 +15,7 @@ class Downloader:
 		self.__filename = filename
 		self.__mode = mode
 		self.__download_dir = os.path.abspath('./downloads')
+		self.__screenshot_dir = os.path.abspath('./screenshots')
 		self.lib_dir: dict = {
 			'movies': '/data/Movies',
 			'tvshows': '/data/Series',
@@ -21,19 +23,23 @@ class Downloader:
 		}
 		if (not os.path.isdir(self.__download_dir)):
 			os.mkdir(self.__download_dir)
-		options = webdriver.FirefoxOptions()
+		if not os.path.isdir(self.__screenshot_dir):
+			os.mkdir(self.__screenshot_dir)
+		self.__init_browser()
+		sleep(5)
+
+	def __init_browser(self):
 		options = webdriver.FirefoxOptions()
 		options.set_preference('browser.download.folderList', 2)
 		options.set_preference('browser.download.manager.showWhenStarting', False)
 		options.set_preference('browser.download.dir', self.__download_dir)
 		options.set_preference('browser.helperApps.neverAsk.saveToDisk', 'application/octet-stream')
-		# options.add_argument('--headless')
+		options.add_argument('--headless')
 		extension_path = os.path.abspath('./ublock_origin-1.52.2.xpi')
 		self.__browser = webdriver.Firefox(options=options)
 		self.__browser.set_window_position(0, 0)
 		self.__browser.maximize_window()
 		self.__browser.install_addon(extension_path)
-		sleep(5)
 
 	class __File:
 		def __init__(self, filename, size, unit='Go'):
@@ -86,6 +92,8 @@ class Downloader:
 		print(f'Got link: {link}')
 		sleep(2)
 		self.__close_cookie_box()
+		sleep(2)
+		self.__browser.find_element(By.CSS_SELECTOR, 'button.ui-button').click()
 		file = self.__get_file_info()
 		print(f"file: {file.filename}\nsize: {file.size} {file.unit}")
 		if (file.unit == 'Go'):
@@ -98,9 +106,14 @@ class Downloader:
 			time_duration = datetime.timedelta(minutes=time / 60)
 			finish_time = current_time + time_duration
 			print(f'waiting for {time / 60} minutes. Download will start at {finish_time}')
+			self.__browser.close()
+			sleep(time)
+			self.__init_browser()
+			sleep(2)
+			self.__browser.get(link)
+			sleep(2)
 			wait_btn = self.__browser.find_element(By.ID, 'dlw')
 			self.__browser.execute_script('arguments[0].scrollIntoView();', wait_btn)
-			sleep(time)
 		access_button = self.__browser.find_element(By.ID, 'dlb')
 		self.__browser.execute_script('arguments[0].scrollIntoView();', access_button)
 		access_button.click()
@@ -117,11 +130,17 @@ class Downloader:
 			renamer.rename(file.filename)
 
 	def download_files(self):
+		error_nb: int = 0
 		with open(self.__filename, 'r') as file:
 			while (line := file.readline()):
 				line = line.strip()
 				if line and not line.startswith('//'):
-					self.__download_link(line)
+					try:
+						self.__download_link(line)
+					except:
+						print(f"Could not download link: {line}", file=sys.stderr)
+						self.__browser.get_screenshot_as_file(f'{self.__screenshot_dir}/error_{error_nb}.png')
+						error_nb += 1
 
 def main():
 	parser = argparse.ArgumentParser(description='Program that downloads a list of links')
