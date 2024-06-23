@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Float
 from .db import Base
 
 class User(Base):
@@ -9,10 +9,11 @@ class User(Base):
 	hashed_password = Column(String)
 
 class Download(Base):
-	__tablename__ = 'downlaod'
+	__tablename__ = 'download'
 
-	# The rest would be sent by the socketio connection
 	id = Column(Integer, primary_key=True)
 	link = Column(Integer, unique=True)
 	filename = Column(String, unique=True)
 	state = Column(Integer)
+	size = Column(Float)
+	size_unit = Column(String)

@@ -1,6 +1,8 @@
 services:
   1fichier-downloader-frontend:
-    image: node:latest
+    image: node
+    depends_on:
+      - 1fichier-downloader-backend
     container_name: 1fichier-downloader-frontend
     ports:
       - 8080:8080
@@ -9,16 +11,17 @@ services:
       - ./frontend:/workspace
     working_dir: /workspace
     command: sh /workspace/script.sh
-    restart: unless-stopped 
+    restart: unless-stopped
   1fichier-downloader-backend:
     image: python:3
     container_name: 1fichier-downloader-backend
     ports:
-      - 3000:3000
+      - 3030:3030
     env_file: ./.env/backend.env
     volumes:
       - ./backend:/workspace
-      - ./backend/download:/downlaods # where files are downloaded
+      - ./backend/download:/downloads # where the files are downloaded
     working_dir: /workspace
+    shm_size: "2gb"
     command: sh /workspace/script.sh
     restart: unless-stopped

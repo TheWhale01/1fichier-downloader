@@ -21,14 +21,16 @@ class TokenData(BaseModel):
 
 class DownloadBase(BaseModel):
 	link: str
+	filename: str
+	size: float
+	size_unit: str
+	state: int
 
 class DownloadCreate(DownloadBase):
 	pass
 
 class Download(DownloadCreate):
 	id: int
-	filename: str
-	state: int
 
 	class Config:
 		from_attributes = True
