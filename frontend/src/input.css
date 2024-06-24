@@ -28,4 +28,22 @@
 	.error_input {
 		@apply bg-red-500 placeholder-white;
 	}
+
+	.load_page {
+		@apply absolute inset-0 flex flex-col items-center justify-center
+			bg-black bg-opacity-40;
+	}
+
+	.spinner_container {
+		@apply flex justify-center;
+	}
+
+	.spinner {
+		@apply border-8 border-solid border-gray-200 border-t-blue-500
+			rounded-full w-32 h-32 mb-5 animate-spin;
+	}
+
+	.load_text {
+		@apply text-2xl p-2.5 bg-white rounded-md;
+	}
 }
