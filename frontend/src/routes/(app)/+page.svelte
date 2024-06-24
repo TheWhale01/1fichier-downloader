@@ -1,12 +1,15 @@
 <script lang="ts">
 	import env from "$lib/env";
+	import Loading from "../../components/Loading.svelte";
 	import { goto } from "$app/navigation";
 	export let data: any;
 
 	let str_links: string = "";
+	let show_loading: boolean = false;
 
 	async function get_links(): Promise<void> {
 		let links: string[] = [];
+		show_loading = true;
 
 		links = str_links.split("\n");
 		const response = await fetch(env.BACKEND_URL + "/download", {
@@ -17,6 +20,7 @@
 			},
 			body: JSON.stringify(links),
 		});
+		show_loading = false;
 		switch (response.status) {
 			case 401:
 				goto("/login");
@@ -26,7 +30,7 @@
 				console.log(await response.json());
 				break;
 			default:
-				console.log("An error occured");
+				console.log(response.statusText);
 				break;
 		}
 	}
@@ -38,7 +42,11 @@
 	bind:value={str_links}
 	placeholder="Place your links here"
 ></textarea>
-<button on:click={get_links}>Download</button>
+<button on:click={get_links} disabled={show_loading}>Download</button>
+
+{#if show_loading}
+	<Loading title="Getting file informations..." />
+{/if}
 
 <style>
 	textarea {

@@ -19,6 +19,7 @@ class	Downloader:
 		self.browser: WebDriver = None
 		self.download_path: str | None = os.getenv('DOWNLOAD_PATH')
 		self.wait_time: int = 2
+		self.db_downloads: list[schemas.DownloadCreate] = []
 		self.init_browser()
 
 	def	__del__(self):
@@ -30,7 +31,7 @@ class	Downloader:
 		self.browser = webdriver.Firefox(options=options)
 		self.browser.set_window_position(0, 0)
 		self.browser.set_window_size(1920, 1080)
-		self.browser.install_addon(os.path.abspath('./downloader/extensions/ublock_origin-1.52.2.xpi'))
+		self.browser.install_addon(os.path.abspath('./src/downloader/extensions/ublock_origin-1.52.2.xpi'))
 
 	def	close_browser(self):
 	   self.browser.close()
@@ -52,15 +53,21 @@ class	Downloader:
 		return File(filename=filename, size=float(size_group[0]), size_unit=size_group[1])
 
 	def	init_downloads(self) -> list[schemas.DownloadCreate]:
-		db_downloads: list[schemas.DownloadCreate] = []
 		for	link in	self.links:
 			self.browser.get(link)
 			sleep(self.wait_time)
 			self.remove_popups()
 			file: File = self.get_file_info()
 			download = schemas.DownloadCreate(link=link, filename=file.filename, state=State.waiting, size=file.size, size_unit=file.size_unit)
-			db_downloads.append(download)
-		return db_downloads
+			self.db_downloads.append(download)
+		return self.db_downloads
+
+	def start_downloads(self, db: Session):
+		if len(self.db_downloads) == 0:
+			return
+		for db_download in self.db_downloads:
+			self.browser.get(db_download.link)
+			sleep(self.wait_time)
 
 def main():
 	downloader: Downloader = Downloader(["https://1fichier.com/?kjv5bsxrhjs5047b8yv8&af=3697663"])

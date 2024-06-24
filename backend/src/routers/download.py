@@ -11,4 +11,9 @@ def add_download_links(links: list[str], user: Annotated[User, Depends(get_curre
 	downloader: Downloader = Downloader(links)
 	downloads: list[schemas.DownloadCreate] = downloader.init_downloads()
 	db_downloads: list[models.Download] = crud_dl.add_downloads(downloads, db)
+	# start downloads
 	return {'downloads': db_downloads}
+
+@router.delete('')
+def remove_download_links(db: Session = Depends(get_db)):
+	crud_dl.delete_downloads(db)

@@ -1,5 +1,5 @@
 <script lang="ts">
-	console.log('bonsoir !')
+	import Loading from "../../../components/Loading.svelte";
 </script>
 
-<h2>Nothing is downloading...</h2>
+<Loading title="getting links informations" />
