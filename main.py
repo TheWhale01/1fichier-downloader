@@ -27,7 +27,7 @@ class Downloader:
 		if (not os.path.isdir(self.__download_dir)):
 			os.mkdir(self.__download_dir)
 		options = webdriver.FirefoxOptions()
-		# options.add_argument('--headless')
+		options.add_argument('--headless')
 		extension_path = os.path.abspath('./ublock_origin-1.52.2.xpi')
 		self.__browser = webdriver.Firefox(options=options)
 		self.__browser.set_window_position(0, 0)
