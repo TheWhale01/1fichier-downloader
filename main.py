@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
 import os
+import sys
 import datetime
 import requests
 from tqdm import tqdm
@@ -14,6 +15,7 @@ class Downloader:
 		self.__filename = filename
 		self.__mode = mode
 		self.__download_dir = os.path.abspath('./downloads')
+		self.__screenshot_dir = os.path.abspath('./screenshots')
 		self.lib_dir: dict = {
 			'movies': '/data/Movies',
 			'tvshows': '/data/Series',
@@ -25,17 +27,12 @@ class Downloader:
 		if (not os.path.isdir(self.__download_dir)):
 			os.mkdir(self.__download_dir)
 		options = webdriver.FirefoxOptions()
-		options.set_preference('browser.download.folderList', 2)
-		options.set_preference('browser.download.manager.showWhenStarting', False)
-		options.set_preference('browser.download.dir', self.__download_dir)
-		options.set_preference('browser.helperApps.neverAsk.saveToDisk', 'application/octet-stream')
 		# options.add_argument('--headless')
 		extension_path = os.path.abspath('./ublock_origin-1.52.2.xpi')
 		self.__browser = webdriver.Firefox(options=options)
 		self.__browser.set_window_position(0, 0)
 		self.__browser.maximize_window()
 		self.__browser.install_addon(extension_path)
-		sleep(5)
 
 	class __File:
 		def __init__(self, filename, size, unit='Go'):
@@ -61,8 +58,9 @@ class Downloader:
 	def __close_cookie_box(self):
 		try:
 			self.__browser.find_element(By.CLASS_NAME, 'cookie_box_close').click()
+			self.__browser.find_element(By.CSS_SELECTOR, 'button.ui-button').click()
 		except:
-			pass
+			return
 
 	def __get_file_info(self):
 		filename = self.__browser.find_element(By.XPATH, '/html/body/form/table/tbody/tr[1]/td[3]')
@@ -72,7 +70,7 @@ class Downloader:
 		size_info = size_info.split(' ')
 		size_info[0] = float(size_info[0])
 		return (self.__File(filename, size_info[0], size_info[1]))
-	
+
 	def __show_progress_bar(self, file, link):
 		response = requests.get(link, stream=True)
 		self.__browser.close()
@@ -107,6 +105,7 @@ class Downloader:
 			self.__init_browser()
 			self.__browser.get(link)
 			sleep(2)
+			self.__close_cookie_box()
 		access_button = self.__browser.find_element(By.ID, 'dlb')
 		self.__browser.execute_script('arguments[0].scrollIntoView();', access_button)
 		access_button.click()
@@ -123,11 +122,17 @@ class Downloader:
 			renamer.rename(file.filename)
 
 	def download_files(self):
+		error_nb: int = 0
 		with open(self.__filename, 'r') as file:
 			while (line := file.readline()):
 				line = line.strip()
 				if line and not line.startswith('//'):
-					self.__download_link(line)
+					try:
+						self.__download_link(line)
+					except:
+						print(f"Could not download link: {line}", file=sys.stderr)
+						self.__browser.get_screenshot_as_file(f'{self.__screenshot_dir}/error_{error_nb}.png')
+						error_nb += 1
 
 def main():
 	parser = argparse.ArgumentParser(description='Program that downloads a list of links')
