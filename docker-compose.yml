@@ -23,5 +23,6 @@ services:
       - ./backend/download:/downloads # where the files are downloaded
     working_dir: /workspace
     shm_size: "2gb"
-    command: python3 src/main.py
+    # command: python3 src/main.py
+    command: sleep infinity
     restart: unless-stopped
