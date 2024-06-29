@@ -25,6 +25,8 @@ class DownloadBase(BaseModel):
 	size: float
 	size_unit: str
 	state: int
+	percentage: float
+	remaining_time: int
 
 class DownloadCreate(DownloadBase):
 	pass

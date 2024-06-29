@@ -5,14 +5,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.webdriver import WebDriver
 from sqlalchemy.sql.compiler import crud
 from include import *
-from crud import download
+from crud import download as crud_dl
 import requests
 
 class File:
-    def __init__(self, filename: str, size: float, size_unit: str):
-        self.filename: str = filename
-        self.size: float = size
-        self.size_unit: str = size_unit
+	def __init__(self, filename: str, size: float, size_unit: str) -> None:
+		self.filename: str = filename
+		self.size: float = size
+		self.size_unit: str = size_unit
+
 
 class	Downloader:
 	class BrowserNotInitiated(Exception):
@@ -23,19 +24,29 @@ class	Downloader:
 		def __init__(self) -> None:
 			super().__init__('No download link found.')
 
-	def	__init__(self, links: list[str], extension_path: str = './src/downloader/extensions/ublock_origin-1.52.2.xpi'):
+	def get_size_multiplier(self, unit: str) -> int:
+		if unit == 'Go':
+			return 1073741824
+		elif unit == 'Mo':
+			return 1048576
+		return 1
+
+	def	__init__(self, links: list[str], extension_path: str = './src/downloader/extensions/ublock_origin-1.52.2.xpi', download_path: str | None = os.getenv('DOWNLOAD_PATH')) -> None:
 		self.links:	list[str] = links
 		self.extension_path: str = extension_path
 		self.browser: WebDriver = None
-		self.download_path: str = os.getenv('DOWNLOAD_PATH')
+		if download_path is None:
+			self.download_path: str = '/downloads/'
+		else:
+			self.download_path: str = download_path
 		self.wait_time: int = 2
 		self.db_downloads: list[schemas.DownloadCreate] = []
 		self.init_browser()
 
-	def	__del__(self):
+	def	__del__(self) -> None:
 		self.close_browser()
 
-	def	init_browser(self):
+	def	init_browser(self) -> None:
 		options = webdriver.FirefoxOptions()
 		# options.add_argument('--headless')
 		self.browser = webdriver.Firefox(options=options)
@@ -43,15 +54,19 @@ class	Downloader:
 		self.browser.set_window_size(1920, 1080)
 		self.browser.install_addon(os.path.abspath(self.extension_path))
 
-	def	close_browser(self):
+	def	close_browser(self) -> None:
 		if self.browser is None:
 			raise self.BrowserNotInitiated()
 		self.browser.close()
+		self.browser = None
 
-	def remove_popups(self):
+	def remove_popups(self) -> None:
 		try:
 			cookie_box = self.browser.find_element(By.CSS_SELECTOR, '.cookie_box_close')
 			cookie_box.click()
+		except:
+			pass
+		try:
 			close_ad_btn = self.browser.find_element(By.CSS_SELECTOR, "button.ui-button")
 			close_ad_btn.click()
 		except:
@@ -73,8 +88,17 @@ class	Downloader:
 			sleep(self.wait_time)
 			self.remove_popups()
 			file: File = self.get_file_info()
-			download = schemas.DownloadCreate(link=link, filename=file.filename, state=State.waiting, size=file.size, size_unit=file.size_unit)
+			download = schemas.DownloadCreate(
+				link=link,
+				filename=file.filename,
+				state=State.waiting,
+				size=file.size,
+				size_unit=file.size_unit,
+				percentage=0,
+				remaining_time=0
+			)
 			self.db_downloads.append(download)
+		crud_dl.add_downloads(self.db_downloads)
 		self.browser.close()
 		return self.db_downloads
 
@@ -92,17 +116,18 @@ class	Downloader:
 		wait_time: int = int(wait_time_str)
 		return wait_time * 60
 
-	def download_link(self, db_download: schemas.DownloadCreate, dl_link: str):
-		# 1. Execute this in another thread
-		# 2. How to communicate informations to main thread ?
+	def download_link(self, db_download: schemas.DownloadCreate, dl_link: str) -> None:
 		filepath: str = os.path.join(self.download_path, db_download.filename)
 		with open(filepath, 'wb') as file:
+			crud_dl.update_dl_state(db_download.link, State.downloading)
 			response = requests.get(dl_link, stream=True)
 			for chunk in response.iter_content(1024):
 				if chunk is None:
 					break
+				db_download.percentage = 100 * (file.tell() / self.get_size_multiplier(db_download.size_unit)) / db_download.size
+				print(f'{db_download.percentage}%')
 				file.write(chunk)
-				# Send percentage to main thread
+		db_download.state = State.done
 
 	def get_dl_link(self) -> str:
 		access_dl_btn: WebElement = self.browser.find_element(By.ID, "dlb")
@@ -114,7 +139,7 @@ class	Downloader:
 			raise self.NoDownloadLink()
 		return dl_link
 
-	def start_downloads(self):
+	def start_downloads(self) -> None:
 		if len(self.db_downloads) == 0:
 			return
 		for db_download in self.db_downloads:
@@ -125,9 +150,8 @@ class	Downloader:
 			time_before_next_dl: int = self.get_waiting_time()
 			if time_before_next_dl:
 				self.close_browser()
-				db_download.state = State.waiting
-				# add remaining waiting time to db
-				# update db
+				crud_dl.update_dl_state(db_download.link, State.waiting)
+				crud_dl.update_dl_state(db_download.link, time_before_next_dl)
 				sleep(time_before_next_dl)
 				self.init_browser()
 				self.browser.get(db_download.link)
@@ -137,8 +161,6 @@ class	Downloader:
 			self.close_browser()
 			self.download_link(db_download, dl_link)
 			db_download.state = State.downloading;
-			# push new state to db
-			# Maybe push downloaded percentage to db
 
 def main():
 	downloader: Downloader = Downloader(["https://1fichier.com/?kjv5bsxrhjs5047b8yv8&af=3697663"], extension_path='/home/whale/Documents/Codes/Svelte/1fichier-downloader/backend/src/downloader/extensions/ublock_origin-1.58.0.xpi')

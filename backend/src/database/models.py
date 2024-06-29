@@ -17,3 +17,5 @@ class Download(Base):
 	state = Column(Integer)
 	size = Column(Float)
 	size_unit = Column(String)
+	percentage = Column(Float)
+	remaining_time = Column(Integer)

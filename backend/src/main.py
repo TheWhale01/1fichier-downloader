@@ -16,5 +16,12 @@ app.include_router(user.router)
 app.include_router(auth.router)
 app.include_router(download.router)
 
+def main():
+	port_str: str | None = os.getenv("PORT")
+	if not port_str:
+		raise Exception("No port found.")
+	port: int = int(port_str)
+	uvicorn.run("main:app", host=os.getenv("HOST"), port=port, reload=True)
+
 if __name__ == '__main__':
-	uvicorn.run("main:app", host=os.getenv("HOST"), port=int(os.getenv("PORT")), reload=True)
+	main()
