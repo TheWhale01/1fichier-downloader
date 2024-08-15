@@ -1,4 +1,5 @@
 from selenium import webdriver
+import shutil
 from selenium.webdriver.common.by import By
 from time import sleep
 import os
@@ -11,9 +12,10 @@ from movie_renamer import MovieRenamer
 from series_renamer import SeriesRenamer
 
 class Downloader:
-	def __init__(self, filename: str, mode: str = ''):
+	def __init__(self, filename: str, mode: str = '', output_path: str = ''):
 		self.__filename = filename
 		self.__mode = mode
+		self.__output_path: str = output_path
 		self.__download_dir = os.path.abspath('./downloads')
 		self.__screenshot_dir = os.path.abspath('./screenshots')
 		self.lib_dir: dict = {
@@ -120,6 +122,8 @@ class Downloader:
 			renamer = SeriesRenamer(self.lib_dir[self.__mode])
 		if renamer:
 			renamer.rename(file.filename)
+		elif self.__output_path:
+			shutil.move(os.path.join(self.__download_dir, file.filename), self.__output_path)
 
 	def download_files(self):
 		error_nb: int = 0
@@ -139,13 +143,14 @@ def main():
 	parser.add_argument('-m', '--movies', action='store_true', help='set renamer to movie mode')
 	parser.add_argument('-s', '--tvshows', action='store_true', help='set renamer to tvshow mode')
 	parser.add_argument('-a', '--animes', action='store_true', help='set renamer to animes mode')
+	parser.add_argument('-p', '--path', help='path where the downloaded file should be')
 	args = parser.parse_args()
 	modes = vars(args)
 	mode: str = ''
 	for k, v in modes.items():
 		if v:
 			mode = k
-	downloader = Downloader('./links.txt', mode=mode)
+	downloader = Downloader('./links.txt', mode=mode, output_path=modes['path'])
 	downloader.download_files()
 
 if (__name__ == '__main__'):
