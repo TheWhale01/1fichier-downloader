@@ -65,8 +65,9 @@ class MovieRenamer:
         shutil.move(filepath, new_name)
 
 def main():
+    movie_name: str = input("Enter the filename you want to rename: ")
     renamer = MovieRenamer()
-    renamer.rename("Debarquement Immediat 2016 1080p FR X264 AC3-mHDgz.mkv")
+    renamer.rename(movie_name)
 
 if __name__ == '__main__':
     main()
