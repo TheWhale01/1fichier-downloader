@@ -32,7 +32,7 @@ class Downloader:
 		if (not os.path.isdir(self.__download_dir)):
 			os.mkdir(self.__download_dir)
 		options = webdriver.FirefoxOptions()
-		options.add_argument('--headless')
+		# options.add_argument('--headless')
 		extension_path = os.path.abspath('./ublock_origin-1.52.2.xpi')
 		self.__browser = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
 		self.__browser.set_window_position(0, 0)
@@ -46,7 +46,8 @@ class Downloader:
 			self.unit = unit
 
 	def __del__(self):
-		self.__browser.close()
+		# self.__browser.close()
+		pass
 
 	def __check_waiting_time(self):
 		try:
@@ -62,6 +63,8 @@ class Downloader:
 
 	def __close_cookie_box(self):
 		try:
+			self.__browser.find_element(By.CSS_SELECTOR, '.cmpboxbtnyes').click()
+			sleep(self.__pause)
 			self.__browser.find_element(By.CLASS_NAME, 'cookie_box_close').click()
 		except:
 			return
@@ -98,6 +101,7 @@ class Downloader:
 			file.size *= 1073741824
 		elif (file.unit == 'Mo'):
 			file.size *= 1048576
+		sleep(60)
 		time = self.__check_waiting_time()
 		if (time):
 			self.__browser.close()
