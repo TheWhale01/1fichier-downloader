@@ -20,6 +20,7 @@ class Downloader:
 		self.__output_path: str = output_path
 		self.__download_dir = os.path.abspath('./downloads')
 		self.__screenshot_dir = os.path.abspath('./screenshots')
+		self.__pause: int = 5
 		self.lib_dir: dict = {
 			'movies': '/data/Movies',
 			'tvshows': '/data/Series',
@@ -31,7 +32,7 @@ class Downloader:
 		if (not os.path.isdir(self.__download_dir)):
 			os.mkdir(self.__download_dir)
 		options = webdriver.FirefoxOptions()
-		# options.add_argument('--headless')
+		options.add_argument('--headless')
 		extension_path = os.path.abspath('./ublock_origin-1.52.2.xpi')
 		self.__browser = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
 		self.__browser.set_window_position(0, 0)
@@ -49,7 +50,7 @@ class Downloader:
 
 	def __check_waiting_time(self):
 		try:
-			time_element = self.__browser.find_element(By.ID, 'dlw')
+			time_element = self.__browser.find_element(By.CSS_SELECTOR, '#dlw')
 			time = time_element.get_attribute('innerText')
 			time = time.split('\n')[2]
 			time = time.replace('Vous devez attendre encore ', '')
@@ -66,9 +67,9 @@ class Downloader:
 			return
 
 	def __get_file_info(self):
-		filename = self.__browser.find_element(By.CSS_SELECTOR, 'table.premium:nth-child(11) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > span:nth-child(1)')
+		filename = self.__browser.find_element(By.XPATH, '/html/body/form/table[1]/tbody/tr/td[2]/span[1]')
 		filename = filename.get_attribute('innerText')
-		size_info = self.__browser.find_element(By.CSS_SELECTOR, 'table.premium:nth-child(11) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(2) > span:nth-child(3)')
+		size_info = self.__browser.find_element(By.XPATH, '/html/body/form/table[1]/tbody/tr/td[2]/span[2]')
 		size_info = size_info.get_attribute('innerText')
 		size_info = size_info.split(' ')
 		size_info[0] = float(size_info[0])
@@ -89,7 +90,7 @@ class Downloader:
 	def __download_link(self, link: str):
 		self.__browser.get(link)
 		print(f'Got link: {link}')
-		sleep(2)
+		sleep(self.__pause)
 		self.__close_cookie_box()
 		file = self.__get_file_info()
 		print(f"file: {file.filename}\nsize: {file.size} {file.unit}")
@@ -107,14 +108,15 @@ class Downloader:
 			sleep(time)
 			self.__init_browser()
 			self.__browser.get(link)
-			sleep(2)
+			sleep(self.__pause)
 			self.__close_cookie_box()
-		access_button = self.__browser.find_element(By.ID, 'dlb')
+		access_button = self.__browser.find_element(By.ID, 'dlw')
 		self.__browser.execute_script('arguments[0].scrollIntoView();', access_button)
 		access_button.click()
-		sleep(2)
+		sleep(self.__pause)
 		print("Starting download")
-		link = self.__browser.find_element(By.CSS_SELECTOR, '.ok').get_attribute('href')
+		link = self.__browser.find_element(By.XPATH, '/html/body/div[4]/div[2]/a').get_attribute('href')
+		print("FOUND LINK")
 		self.__show_progress_bar(file, link)
 		renamer = None
 		if self.__mode == 'movies':
